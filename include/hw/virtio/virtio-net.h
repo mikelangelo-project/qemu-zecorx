@@ -68,6 +68,7 @@ typedef struct VirtIONet {
     uint32_t host_features;
     uint8_t has_ufo;
     int mergeable_rx_bufs;
+    int zecorx;
     uint8_t promisc;
     uint8_t allmulti;
     uint8_t alluni;

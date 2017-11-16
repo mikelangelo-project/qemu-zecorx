@@ -602,6 +602,11 @@ static inline uint64_t virtio_net_supported_guest_offloads(VirtIONet *n)
     return virtio_net_guest_offloads_by_features(vdev->guest_features);
 }
 
+static void virtio_net_set_zecorx(VirtIONet *n, int zecorx)
+{
+	n->zecorx = zecorx;
+}
+
 static void virtio_net_set_features(VirtIODevice *vdev, uint64_t features)
 {
     VirtIONet *n = VIRTIO_NET(vdev);
@@ -609,6 +614,9 @@ static void virtio_net_set_features(VirtIODevice *vdev, uint64_t features)
 
     virtio_net_set_multiqueue(n,
                               virtio_has_feature(features, VIRTIO_NET_F_MQ));
+
+    virtio_net_set_zecorx(n, 
+                              virtio_has_feature(features, VIRTIO_NET_ZERO_COPY_RX));
 
     virtio_net_set_mrg_rx_bufs(n,
                                virtio_has_feature(features,
@@ -1526,6 +1534,7 @@ static void virtio_net_save_device(VirtIODevice *vdev, QEMUFile *f)
     qemu_put_buffer(f, n->mac, ETH_ALEN);
     qemu_put_be32(f, n->vqs[0].tx_waiting);
     qemu_put_be32(f, n->mergeable_rx_bufs);
+    qemu_put_be32(f, n->zecorx);
     qemu_put_be16(f, n->status);
     qemu_put_byte(f, n->promisc);
     qemu_put_byte(f, n->allmulti);
@@ -1900,6 +1909,8 @@ static Property virtio_net_properties[] = {
                     VIRTIO_NET_F_HOST_UFO, true),
     DEFINE_PROP_BIT("mrg_rxbuf", VirtIONet, host_features,
                     VIRTIO_NET_F_MRG_RXBUF, true),
+    DEFINE_PROP_BIT("zecorx", VirtIONet, host_features,
+                    VIRTIO_NET_ZERO_COPY_RX, true),
     DEFINE_PROP_BIT("status", VirtIONet, host_features,
                     VIRTIO_NET_F_STATUS, true),
     DEFINE_PROP_BIT("ctrl_vq", VirtIONet, host_features,
